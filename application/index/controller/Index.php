@@ -1,5 +1,7 @@
 <?php
+
 namespace app\index\controller;
+
 use app\common\EmailUtil;
 use app\index\model\Directories;
 use think\Controller;
@@ -7,8 +9,13 @@ use think\Db;
 
 class Index extends Controller
 {
+    /**
+     *发送邮件所需要的信息
+     *
+     */
     public function index()
     {
+        //验证时间有没有改变
         if (file_exists("number.lock")) {
             $modify_time = filemtime("number.lock");
             $change_time = time() - $modify_time;
@@ -20,36 +27,42 @@ class Index extends Controller
         $Account = Db::name('Account')->count();
         $AccountData = Db::name('Account')->select();
         $emailnum = Db::name('Directories')->field('id,email,contacts')->select();
-        $num =  file_get_contents('1.txt');
+        //建两个文件 默认为0
+        $num = file_get_contents('1.txt');
         $num1 = file_get_contents('2.txt');
         while (1) {
-            if($num >=500){
-                $num =0;
+            //一共500个邮箱如果大于500或者等于500,重置为0
+            if ($num >= 500) {
+                $num = 0;
             }
+//            获取发送邮箱所需要的信息
             $emaildata = $AccountData[$num];
             $Directoriesdata = $emailnum[$num1];
             $sendUser = $emaildata['account'];
-            $sendpwd =$emaildata['pwd'];
+            $sendpwd = $emaildata['pwd'];
             $hosts = $emaildata["hosts"];
             $toUser = $Directoriesdata['email'];
             $fromname = 'QiangBi Technology Corporation';
             $sendBody = $this->template();
-            $subject="Dear ".$Directoriesdata['contacts'] .' We provide wonderful Website design';
-            $emailUtil->phpmailerSend($sendUser, $sendpwd, $subject, $toUser, $sendBody,$fromname,$hosts);
+            $subject = "Dear " . $Directoriesdata['contacts'] . ' We provide wonderful Website design';
+            $emailUtil->phpmailerSend($sendUser, $sendpwd, $subject, $toUser, $sendBody, $fromname, $hosts);
             Db::name('Directories')
                 ->where('id', $Directoriesdata['id'])
                 ->update(['is_send' => '20']);
+//            递增存到txt文件
             ++$num;
             ++$num1;
-            file_put_contents('1.txt',$num);
-            file_put_contents('2.txt',$num1);
-            file_put_contents('number.lock','14');
+            file_put_contents('1.txt', $num);
+            file_put_contents('2.txt', $num1);
+            file_put_contents('number.lock', '14');
+//            有一个缓冲的时间
             sleep(5);
         }
     }
 
-    public function template(){
-        $doc=<<<EOF
+    public function template()
+    {
+        $doc = <<<EOF
         <div id="contentDescription" style="line-height:1.5;text-align:justify;text-justify:inter-ideograph">
     <div><br></div>
     Hi,<br>
